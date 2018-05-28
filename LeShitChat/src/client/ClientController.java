@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 import model.ChatEintrag;
 import model.ChatOperation;
@@ -26,16 +28,16 @@ public class ClientController {
 	}
 
 	public ChatEintrag sentToServer(ChatEintrag value) throws IOException {
-		//Verpacken
+		// Verpacken
 		ChatOperation chatOp = new ChatOperation(Operation.CHATSEND, value);
-		
-		//Socket stellt eine Verbindung mit dem Server her.
+
+		// Socket stellt eine Verbindung mit dem Server her.
 		Socket mySocket = new Socket(ConnectionUtils.getServerHost(), ConnectionUtils.PORT);
 		// Verbindung steht, Objekt wird geschrieben
 		ObjectOutputStream outStream = new ObjectOutputStream(mySocket.getOutputStream());
 		outStream.writeObject(chatOp);
 		outStream.flush();
-		//Objekt wird zurückgeholt
+		// Objekt wird zurückgeholt
 		ObjectInputStream inStream = new ObjectInputStream(mySocket.getInputStream());
 		ChatOperation result = null;
 		try {
@@ -45,17 +47,37 @@ public class ClientController {
 		} finally {
 			mySocket.close();
 		}
-		
-		//entpacken
+
+		// entpacken
 		return (ChatEintrag) result.getData();
 	}
 
-	public static void main(String[] args) {
-		ChatEintrag test = new ChatEintrag("me", "Hello World!");
+	public List<ChatEintrag> recieveFromServer() throws IOException {
+		// Verpacken
+		ChatOperation chatOp = new ChatOperation(Operation.RECIEVECHATS, null);
+
+		// Socket stellt eine Verbindung mit dem Server her.
+		Socket mySocket = new Socket(ConnectionUtils.getServerHost(), ConnectionUtils.PORT);
+		// Verbindung steht, Objekt wird geschrieben
+		ObjectOutputStream outStream = new ObjectOutputStream(mySocket.getOutputStream());
+		outStream.writeObject(chatOp);
+		outStream.flush();
+		// Objekt wird zurückgeholt
+		ObjectInputStream inStream = new ObjectInputStream(mySocket.getInputStream());
+		ChatOperation result = null;
 		try {
-			ClientController.getInstance().sentToServer(test);
-		} catch (IOException e) {
+			result = (ChatOperation) inStream.readObject();
+		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
+		} finally {
+			mySocket.close();
 		}
+
+		// Entpacken
+		return (List<ChatEintrag>) result.getData();
+	}
+
+	public static void main(String[] args) {
+		
 	}
 }
