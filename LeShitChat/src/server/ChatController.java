@@ -116,6 +116,9 @@ public class ChatController extends Thread implements Runnable {
 	 */
 	public static synchronized void startVerarbeitung(Socket socket) {
 		socketList.addLast(socket);
+		if(socketList.size() / anzahl > 50) {
+			new ChatController();
+		}
 	}
 
 }
